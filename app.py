@@ -25,33 +25,36 @@ if uploaded:
         df = standardize_columns(df)
         st.write("Preview:", df.head())
 
+        # --- summaries ---
         block_summary, ctl_summary = summarize_qc(df)
 
+        # --- make outputs dir & plot files ---
         outputs = Path("outputs"); outputs.mkdir(exist_ok=True)
         p1 = outputs / "box_counts.png"
         p2 = outputs / "heatmap_controls.png"
         boxplot_counts_by_block(df, str(p1))
         heatmap_external_controls(df, str(p2))
 
-                # --- show summaries ---
+        # --- show summaries ---
         st.subheader("Block summary")
         st.dataframe(block_summary)
 
         st.subheader("Control summary")
         st.table(ctl_summary)
 
-        # --- generate + show plots ---
-        outputs = Path("outputs"); outputs.mkdir(exist_ok=True)
-        p1 = outputs / "box_counts.png"
-        p2 = outputs / "heatmap_controls.png"
-
-        fig1 = boxplot_counts_by_block(df, str(p1))
-        fig2 = heatmap_external_controls(df, str(p2))
-
+        # --- show plots saved to disk ---
         st.subheader("Plots")
-        st.pyplot(fig1)
-        st.pyplot(fig2)
+        if p1.exists():
+            st.image(str(p1), caption="Counts by Group/Block", use_column_width=True)
+        if p2.exists():
+            st.image(str(p2), caption="External Controls Heatmap", use_column_width=True)
 
-        # --- build PDF as before ---
+        # --- build PDF & download ---
         pdf_path = outputs / "QC_Report.pdf"
         build_pdf(str(pdf_path), "engine/rules.json", block_summary, ctl_summary, str(p1), str(p2))
+        if pdf_path.exists():
+            with open(pdf_path, "rb") as f:
+                st.download_button("Download PDF", data=f.read(), file_name="QC_Report.pdf", mime="application/pdf")
+
+    except Exception as e:
+        st.error(f"Error during QC processing: {e}")
