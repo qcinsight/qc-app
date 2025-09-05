@@ -1,4 +1,4 @@
-<file name=engine/qc.py>def summarize_qc(df: pd.DataFrame):
+def summarize_qc(df: pd.DataFrame):
     """
     Return (block_or_global_summary_df, control_summary_df) while being tolerant to missing columns.
     - Required: SampleID (string)
@@ -55,9 +55,8 @@
     ctl_summary = pd.DataFrame({"external_controls_n":[external_n], "internal_like_n":[internal_like_n]})
 
     return block_fail_frac, ctl_summary
-</file>
 
-<file name=engine/plots.py>def boxplot_counts_by_block(df: pd.DataFrame, outpath: str):
+def boxplot_counts_by_block(df: pd.DataFrame, outpath: str):
     # Choose a numeric metric automatically
     metric_candidates = ["Count","ReadDepth","MappedReads","QuantValue"]
     metric = next((m for m in metric_candidates if m in df.columns), None)
@@ -108,4 +107,3 @@ def heatmap_external_controls(df: pd.DataFrame, outpath: str):
     plt.tight_layout()
     plt.savefig(outpath, dpi=200)
     plt.close()
-</file>
