@@ -23,7 +23,9 @@ if uploaded or use_demo:
             st.info("Using bundled demo dataset.")
         else:
             # Fallback: generate a tiny synthetic demo dataset
-            st.warning("Demo file not found at samples/demo_olink.csv — using built-in demo rows.")
+            if "demo_notice_shown" not in st.session_state or not st.session_state["demo_notice_shown"]:
+                st.info("Using built-in demo rows (add samples/demo_olink.csv to customize this demo).")
+                st.session_state["demo_notice_shown"] = True
             df = pd.DataFrame({
                 "SampleID": [f"S{i:03d}" for i in range(1, 13)],
                 "SampleType": ["sample"]*10 + ["plate control","negative control"],
