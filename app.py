@@ -22,8 +22,21 @@ if uploaded or use_demo:
             df = pd.read_csv(demo_path)
             st.info("Using bundled demo dataset.")
         else:
-            st.warning("Demo file not found at samples/demo_olink.csv")
-            st.stop()
+            # Fallback: generate a tiny synthetic demo dataset
+            st.warning("Demo file not found at samples/demo_olink.csv — using built-in demo rows.")
+            df = pd.DataFrame({
+                "SampleID": [f"S{i:03d}" for i in range(1, 13)],
+                "SampleType": ["sample"]*10 + ["plate control","negative control"],
+                "Block": ["A"]*6 + ["B"]*6,
+                "Count": [120,130,110,140,150,160, 90,95,100,105,80,85],
+                "IntraCV": [0.10,0.08,0.12,0.11,0.09,0.07, 0.15,0.14,0.13,0.16,0.18,0.17],
+                "InterCV": [0.12,0.10,0.13,0.12,0.11,0.09, 0.16,0.15,0.14,0.17,0.19,0.18],
+                "PF": [80,82,78,79,83,85, 70,72,68,69,65,67],
+                "Occupancy": [75,78,74,77,79,80, 68,70,66,67,60,62],
+                "QuantValue": [2.1,2.0,2.2,2.3,2.4,2.5, 1.8,1.9,1.7,1.6,1.5,1.4],
+                "LibraryType": ["LT1"]*6 + ["LT2"]*6,
+                "SampleQC": ["pass","pass","pass","pass","pass","pass","pass","pass","fail","pass","pass","fail"]
+            })
     else:
         if uploaded.name.endswith(".csv"):
             df = pd.read_csv(uploaded)
