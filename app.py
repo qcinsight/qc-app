@@ -11,18 +11,36 @@ st.caption("Upload a CSV/Parquet export → get a 1-page PDF with summary + plot
 
 uploaded = st.file_uploader("Upload CSV or Parquet", type=["csv","parquet"])
 
-if uploaded:
-    # read file
-    if uploaded.name.endswith(".csv"):
-        df = pd.read_csv(uploaded)
+# Optional demo dataset so users can try without their own data
+use_demo = st.checkbox("Try with demo data", value=False)
+
+if uploaded or use_demo:
+    # read file (uploaded or demo)
+    if use_demo and not uploaded:
+        demo_path = Path("samples/demo_olink.csv")
+        if demo_path.exists():
+            df = pd.read_csv(demo_path)
+            st.info("Using bundled demo dataset.")
+        else:
+            st.warning("Demo file not found at samples/demo_olink.csv")
+            st.stop()
     else:
-        import pyarrow.parquet as pq, io
-        table = pq.read_table(io.BytesIO(uploaded.read()))
-        df = table.to_pandas()
+        if uploaded.name.endswith(".csv"):
+            df = pd.read_csv(uploaded)
+        else:
+            import pyarrow.parquet as pq, io
+            table = pq.read_table(io.BytesIO(uploaded.read()))
+            df = table.to_pandas()
+
+    # De-identification confirmation gate
+    confirm = st.checkbox("I confirm this file is de-identified (no PHI).")
+    if not confirm:
+        st.stop()
 
     try:
         check_phi_columns(df)
         df = standardize_columns(df)
+        st.caption("Detected columns: " + ", ".join(df.columns.astype(str)[:20]) + ("…" if len(df.columns) > 20 else ""))
         st.write("Preview:", df.head())
 
         # --- summaries ---
@@ -58,3 +76,5 @@ if uploaded:
 
     except Exception as e:
         st.error(f"Error during QC processing: {e}")
+
+st.caption("Research use only • Files processed transiently • No PHI")
