@@ -54,5 +54,4 @@ if uploaded:
 
         # --- build PDF as before ---
         pdf_path = outputs / "QC_Report.pdf"
-        build_pdf(str(pdf_path), "engine/rules.json",
-                  block_summary, ctl_summary, str(p1), str(p2))
+        build_pdf(str(pdf_path), "engine/rules.json", block_summary, ctl_summary, str(p1), str(p2))
