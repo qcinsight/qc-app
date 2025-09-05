@@ -1,0 +1,10 @@
+{
+  "version": "2025-09-01",
+  "fail_if_sample_fail_fraction_gt": 0.1667,
+  "pf_min": 75,
+  "occupancy_min": 70,
+  "max_intra_cv": 0.20,
+  "max_inter_cv": 0.25,
+  "internal_controls": ["Extension control 1–8", "Incubation control 1–8", "Amplification control 1–8"],
+  "external_controls": ["plate control", "sample control", "negative control"]
+}

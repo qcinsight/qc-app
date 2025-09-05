@@ -1,0 +1,9 @@
+SampleID,SampleType,Block,Count,IntraCV,InterCV,PF,Occupancy,SampleQC
+S1,sample,A,120,0.08,0.12,82,78,pass
+S2,sample,A,110,0.10,0.15,79,74,pass
+S3,sample,A,95,0.14,0.18,70,65,fail
+PC1,plate control,A,200,0.05,0.08,95,90,pass
+NC1,negative control,A,15,0.20,0.22,60,55,pass
+S4,sample,B,130,0.07,0.11,88,80,pass
+S5,sample,B,90,0.13,0.17,72,68,fail
+SC1,sample control,B,180,0.06,0.09,92,88,pass
