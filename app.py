@@ -76,9 +76,9 @@ if uploaded or use_demo:
         # --- show plots saved to disk ---
         st.subheader("Plots")
         if p1.exists():
-            st.image(str(p1), caption="Counts by Group/Block", use_column_width=True)
+            st.image(str(p1), caption="Counts by Group/Block", use_container_width=True)
         if p2.exists():
-            st.image(str(p2), caption="External Controls Heatmap", use_column_width=True)
+            st.image(str(p2), caption="External Controls Heatmap", use_container_width=True)
 
         # --- build PDF & download ---
         pdf_path = outputs / "QC_Report.pdf"
