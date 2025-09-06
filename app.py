@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 
-# Import helpers from engine package
+# Engine helpers
 from engine.qc import summarize_qc
 from engine.plots import boxplot_counts_by_block, heatmap_external_controls
 
@@ -81,17 +81,11 @@ if use_demo or uploaded:
         st.stop()
 
     # ---- Choose metric & grouping ----
-    preferred_metrics = [
-        "Count","ReadDepth","MappedReads","PF","Occupancy","QuantValue","Coverage"
-    ]
-    # numeric columns present in the data
+    preferred_metrics = ["Count","ReadDepth","MappedReads","PF","Occupancy","QuantValue","Coverage"]
     numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
     metric_options = [c for c in preferred_metrics if c in df.columns] or numeric_cols
 
-    group_candidates = [
-        c for c in ["Block","Plate","Run","Batch","Lane","Flowcell","LibraryType","SampleType"]
-        if c in df.columns
-    ]
+    group_candidates = [c for c in ["Block","Plate","Run","Batch","Lane","Flowcell","LibraryType","SampleType"] if c in df.columns]
 
     col1, col2 = st.columns(2)
     with col1:
@@ -100,9 +94,7 @@ if use_demo or uploaded:
         chosen_group = st.selectbox("Group by (optional)", ["(none)"] + group_candidates)
         chosen_group = None if chosen_group == "(none)" else chosen_group
 
-    st.caption(
-        f"Plotting **{chosen_metric}**" + (f" grouped by **{chosen_group}**" if chosen_group else " (no grouping)")
-    )
+    st.caption(f"Plotting **{chosen_metric}**" + (f" grouped by **{chosen_group}**" if chosen_group else " (no grouping)"))
 
     # ---- Show detected columns & preview ----
     st.caption("Detected columns: " + ", ".join(map(str, df.columns[:20])) + ("…" if len(df.columns) > 20 else ""))
@@ -126,14 +118,23 @@ if use_demo or uploaded:
     outputs = Path("outputs"); outputs.mkdir(exist_ok=True)
     p1 = outputs / "plot1.png"
     p2 = outputs / "plot2.png"
-    boxplot_counts_by_block(df, str(p1), metric=chosen_metric, group_key=chosen_group)
-    heatmap_external_controls(df, str(p2), value_col=chosen_metric, group_key=chosen_group)
+
+    # Prefer new plotting API; fall back to legacy signature if remote server has old module
+    try:
+        boxplot_counts_by_block(df, str(p1), metric=chosen_metric, group_key=chosen_group)
+    except TypeError:
+        boxplot_counts_by_block(df, str(p1))
+
+    try:
+        heatmap_external_controls(df, str(p2), value_col=chosen_metric, group_key=chosen_group)
+    except TypeError:
+        heatmap_external_controls(df, str(p2))
 
     st.subheader("Plots")
     if p1.exists():
-        st.image(str(p1), caption="Metric by Group (auto-chosen)", width="stretch")
+        st.image(str(p1), caption="Metric by Group", width="stretch")
     if p2.exists():
-        st.image(str(p2), caption="External Controls Heatmap (if available)", width="stretch")
+        st.image(str(p2), caption="External Controls Heatmap", width="stretch")
 
     # ---- PDF (optional) ----
     if HAS_PDF:
