@@ -85,6 +85,15 @@ if use_demo or uploaded:
     numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
     metric_options = [c for c in preferred_metrics if c in df.columns] or numeric_cols
 
+    # Helper: resolve a column name case-insensitively
+    def _resolve_col(name, cols):
+        if name is None:
+            return None
+        if name in cols:
+            return name
+        low = {c.lower(): c for c in cols}
+        return low.get(str(name).lower(), name if name in cols else None)
+
     group_candidates = [c for c in ["Block","Plate","Run","Batch","Lane","Flowcell","LibraryType","SampleType"] if c in df.columns]
 
     col1, col2 = st.columns(2)
@@ -93,6 +102,9 @@ if use_demo or uploaded:
     with col2:
         chosen_group = st.selectbox("Group by (optional)", ["(none)"] + group_candidates)
         chosen_group = None if chosen_group == "(none)" else chosen_group
+
+    chosen_metric = _resolve_col(chosen_metric, df.columns)
+    chosen_group = _resolve_col(chosen_group, df.columns) if chosen_group else None
 
     st.caption(f"Plotting **{chosen_metric}**" + (f" grouped by **{chosen_group}**" if chosen_group else " (no grouping)"))
 
@@ -119,37 +131,38 @@ if use_demo or uploaded:
         import inspect, engine.plots as eplots
         sig = inspect.signature(eplots.boxplot_counts_by_block)
         if "metric" in sig.parameters:
-            # New API is available
+            st.caption("plots api: new")
             return eplots.boxplot_counts_by_block(df, outpath, metric=metric, group_key=group_key)
-        # Legacy API: remap the chosen metric into a temporary 'Count' column so the old function will plot it
+        # Legacy API fallback: remap chosen metric to 'Count'
+        st.caption("plots api: legacy (mapped to 'Count')")
         df2 = df.copy()
-        if metric and metric in df2.columns and metric != "Count":
-            try:
-                df2["Count"] = df2[metric]
-            except Exception:
-                pass
+        if metric and metric in df2.columns:
+            df2["Count"] = pd.to_numeric(df2[metric], errors="coerce")
         return eplots.boxplot_counts_by_block(df2, outpath)
-
 
     def _safe_heatmap(df, outpath, value_col, group_key):
         import inspect, engine.plots as eplots
         sig = inspect.signature(eplots.heatmap_external_controls)
         if "value_col" in sig.parameters:
-            # New API is available
+            st.caption("heatmap api: new")
             return eplots.heatmap_external_controls(df, outpath, value_col=value_col, group_key=group_key)
-        # Legacy API: remap chosen metric to 'Count' so the old heatmap uses the desired values
+        # Legacy API fallback: remap chosen metric to 'Count'
+        st.caption("heatmap api: legacy (mapped to 'Count')")
         df2 = df.copy()
-        if value_col and value_col in df2.columns and value_col != "Count":
-            try:
-                df2["Count"] = df2[value_col]
-            except Exception:
-                pass
+        if value_col and value_col in df2.columns:
+            df2["Count"] = pd.to_numeric(df2[value_col], errors="coerce")
         return eplots.heatmap_external_controls(df2, outpath)
 
     # ---- Plots ----
     outputs = Path("outputs"); outputs.mkdir(exist_ok=True)
     p1 = outputs / "plot1.png"
     p2 = outputs / "plot2.png"
+
+    st.caption(f"using metric: {chosen_metric}")
+    if chosen_metric in df.columns:
+        st.caption(f"metric dtype: {df[chosen_metric].dtype}")
+    if chosen_group:
+        st.caption(f"grouping by: {chosen_group}")
 
     # Always honor chosen metric/group with safe wrappers
     _safe_boxplot(df, str(p1), chosen_metric, chosen_group)
