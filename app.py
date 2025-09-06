@@ -119,16 +119,9 @@ if use_demo or uploaded:
     p1 = outputs / "plot1.png"
     p2 = outputs / "plot2.png"
 
-    # Prefer new plotting API; fall back to legacy signature if remote server has old module
-    try:
-        boxplot_counts_by_block(df, str(p1), metric=chosen_metric, group_key=chosen_group)
-    except TypeError:
-        boxplot_counts_by_block(df, str(p1))
-
-    try:
-        heatmap_external_controls(df, str(p2), value_col=chosen_metric, group_key=chosen_group)
-    except TypeError:
-        heatmap_external_controls(df, str(p2))
+    # Always honor chosen metric/group
+    boxplot_counts_by_block(df, str(p1), metric=chosen_metric, group_key=chosen_group)
+    heatmap_external_controls(df, str(p2), value_col=chosen_metric, group_key=chosen_group)
 
     st.subheader("Plots")
     if p1.exists():
