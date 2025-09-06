@@ -114,14 +114,46 @@ if use_demo or uploaded:
     st.subheader("Control summary")
     st.dataframe(ctl_summary, width="stretch")
 
+    # ---- Helper functions to adapt to new or legacy plotting signatures ----
+    def _safe_boxplot(df, outpath, metric, group_key):
+        import inspect, engine.plots as eplots
+        sig = inspect.signature(eplots.boxplot_counts_by_block)
+        if "metric" in sig.parameters:
+            # New API is available
+            return eplots.boxplot_counts_by_block(df, outpath, metric=metric, group_key=group_key)
+        # Legacy API: remap the chosen metric into a temporary 'Count' column so the old function will plot it
+        df2 = df.copy()
+        if metric and metric in df2.columns and metric != "Count":
+            try:
+                df2["Count"] = df2[metric]
+            except Exception:
+                pass
+        return eplots.boxplot_counts_by_block(df2, outpath)
+
+
+    def _safe_heatmap(df, outpath, value_col, group_key):
+        import inspect, engine.plots as eplots
+        sig = inspect.signature(eplots.heatmap_external_controls)
+        if "value_col" in sig.parameters:
+            # New API is available
+            return eplots.heatmap_external_controls(df, outpath, value_col=value_col, group_key=group_key)
+        # Legacy API: remap chosen metric to 'Count' so the old heatmap uses the desired values
+        df2 = df.copy()
+        if value_col and value_col in df2.columns and value_col != "Count":
+            try:
+                df2["Count"] = df2[value_col]
+            except Exception:
+                pass
+        return eplots.heatmap_external_controls(df2, outpath)
+
     # ---- Plots ----
     outputs = Path("outputs"); outputs.mkdir(exist_ok=True)
     p1 = outputs / "plot1.png"
     p2 = outputs / "plot2.png"
 
-    # Always honor chosen metric/group
-    boxplot_counts_by_block(df, str(p1), metric=chosen_metric, group_key=chosen_group)
-    heatmap_external_controls(df, str(p2), value_col=chosen_metric, group_key=chosen_group)
+    # Always honor chosen metric/group with safe wrappers
+    _safe_boxplot(df, str(p1), chosen_metric, chosen_group)
+    _safe_heatmap(df, str(p2), chosen_metric, chosen_group)
 
     st.subheader("Plots")
     if p1.exists():
