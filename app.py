@@ -80,6 +80,30 @@ if use_demo or uploaded:
     if not confirm:
         st.stop()
 
+    # ---- Choose metric & grouping ----
+    preferred_metrics = [
+        "Count","ReadDepth","MappedReads","PF","Occupancy","QuantValue","Coverage"
+    ]
+    # numeric columns present in the data
+    numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+    metric_options = [c for c in preferred_metrics if c in df.columns] or numeric_cols
+
+    group_candidates = [
+        c for c in ["Block","Plate","Run","Batch","Lane","Flowcell","LibraryType","SampleType"]
+        if c in df.columns
+    ]
+
+    col1, col2 = st.columns(2)
+    with col1:
+        chosen_metric = st.selectbox("Metric to plot", metric_options, index=0 if metric_options else None)
+    with col2:
+        chosen_group = st.selectbox("Group by (optional)", ["(none)"] + group_candidates)
+        chosen_group = None if chosen_group == "(none)" else chosen_group
+
+    st.caption(
+        f"Plotting **{chosen_metric}**" + (f" grouped by **{chosen_group}**" if chosen_group else " (no grouping)")
+    )
+
     # ---- Show detected columns & preview ----
     st.caption("Detected columns: " + ", ".join(map(str, df.columns[:20])) + ("…" if len(df.columns) > 20 else ""))
     st.subheader("Preview:")
@@ -102,8 +126,8 @@ if use_demo or uploaded:
     outputs = Path("outputs"); outputs.mkdir(exist_ok=True)
     p1 = outputs / "plot1.png"
     p2 = outputs / "plot2.png"
-    boxplot_counts_by_block(df, str(p1))
-    heatmap_external_controls(df, str(p2))
+    boxplot_counts_by_block(df, str(p1), metric=chosen_metric, group_key=chosen_group)
+    heatmap_external_controls(df, str(p2), value_col=chosen_metric, group_key=chosen_group)
 
     st.subheader("Plots")
     if p1.exists():
